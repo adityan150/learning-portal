@@ -16,7 +16,5 @@ public class CourseResponseDto {
 	private int durationHours;
 	
 	private String authorName;
-	
-	private int enrolledCount;
-	
+		
 }

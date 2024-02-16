@@ -17,11 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.adityan150.learningportal.entity.Course;
-import com.adityan150.learningportal.entity.User;
 import com.adityan150.learningportal.mapstruct.dtos.UserDto;
 import com.adityan150.learningportal.mapstruct.dtos.UserLoginDto;
-import com.adityan150.learningportal.mapstruct.mappers.UserMapper;
-import com.adityan150.learningportal.repository.UserRepository;
 import com.adityan150.learningportal.service.UserService;
 
 import lombok.AllArgsConstructor;
@@ -35,14 +32,13 @@ public class UserController {
 	
 	private UserService userService;
 	
-	/* Authentication */
+	/* Mock Authentication */
 	
 	@PostMapping("/login")
 	public ResponseEntity<String> loginUser(@RequestBody UserLoginDto userLoginDto) {
 		log.info("UserLoginDto: " + userLoginDto.toString());
 		
 		UserDto user = userService.authenticateUser(userLoginDto.getEmail());
-		
 		
 		if (user == null) {
 			return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
@@ -84,7 +80,7 @@ public class UserController {
 	}
 	
 	
-	/* Admin functions */
+	/* ADMIN functions */
 	// CRUD on other users
 	
 	@GetMapping("/all")
@@ -132,40 +128,50 @@ public class UserController {
 		UserDto userDtoUpdated = userService.updateUser(id, userDto);
 		
 		if (userDtoUpdated == null) {
-			return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+			return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
 		}
 		
 		return new ResponseEntity<>(userDtoUpdated, HttpStatus.OK);
-		
 	}
 	
 	
 	
 	/* Learner Functions */
 	
-	@PutMapping("/user/{id}/enroll/{course_id}")
-	public ResponseEntity<Course> enrollUserToCourse(@PathVariable("id") long id, @PathVariable("course_id") long courseId) {
-		return null;
+	@PutMapping("/{user_id}/enroll/{course_id}")
+	public ResponseEntity<String> enrollUserToCourse(@PathVariable("user_id") long userId, @PathVariable("course_id") long courseId) {
+		String response = userService.enrollToCourse(userId, courseId);
+		if (response == null) {
+			return new ResponseEntity<>("Failed to enroll.", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
-	@PutMapping("/user/{id}/unenroll/{course_id}")
-	public ResponseEntity<Course> unenrollUserFromCourse(@PathVariable("id") long id, @PathVariable("course_id") long courseId) {
-		return null;
+	@PutMapping("/{user_id}/enroll/{course_id}")
+	public ResponseEntity<String> unenrollUserFromCourse(@PathVariable("user_id") long userId, @PathVariable("course_id") long courseId) {
+		String response = userService.unenrollCourse(userId, courseId);
+		if (response == null) {
+			return new ResponseEntity<>("Failed to enroll.", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
-	@PutMapping("/user/{id}/favorite/{course_id}")
-	public ResponseEntity<Course> addCourseToFavorite(@PathVariable("id") long id, @PathVariable("course_id") long courseId) {
-		return null;
+	@PutMapping("/{user_id}/enroll/{course_id}")
+	public ResponseEntity<String> addCourseToFavorite(@PathVariable("user_id") long userId, @PathVariable("course_id") long courseId) {
+		String response = userService.favoriteCourse(userId, courseId);
+		if (response == null) {
+			return new ResponseEntity<>("Failed to add course to favorite.", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	
-	@PutMapping("/user/{id}/removefavorite/{course_id}")
-	public ResponseEntity<Course> removeCourseFromFavorite(@PathVariable("id") long id, @PathVariable("course_id") long courseId) {
-		return null;
+	@PutMapping("/{user_id}/enroll/{course_id}")
+	public ResponseEntity<String> removeCourseFromFavorite(@PathVariable("user_id") long userId, @PathVariable("course_id") long courseId) {
+		String response = userService.removeFavorite(userId, courseId);
+		if (response == null) {
+			return new ResponseEntity<>("Failed to remove favorite.", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
-	/* Author functions */
-	
-	// CRUD on courses
-	
-	
+		
 }

@@ -15,6 +15,7 @@ import com.adityan150.learningportal.mapstruct.dtos.CourseUpdateDto;
 import com.adityan150.learningportal.mapstruct.mappers.CourseMapper;
 import com.adityan150.learningportal.repository.CourseRepository;
 import com.adityan150.learningportal.repository.UserRepository;
+import com.adityan150.learningportal.utils.InputValidator;
 
 import lombok.AllArgsConstructor;
 
@@ -39,8 +40,15 @@ public class CourseService {
 		return courseDtoList;
 	}
 	
+	public CourseResponseDto getCourseById(long id) {
+		Course course = courseRepository.findById(id).orElse(null);
+		if (course == null)
+			return null;
+		return CourseMapper.INSTANCE.courseToCourseGetRequestDto(course);
+	}
+	
 	public CourseResponseDto createCourse(CourseCreateRequestDto courseCreateRequestDto) throws Exception {
-		Optional<User> userOptional = userRepository.findById(13L);
+		Optional<User> userOptional = userRepository.findById(1L);
 		if (userOptional.isEmpty()) {
 			throw new Exception("Invalid request. User not present.");
 		}
@@ -51,9 +59,45 @@ public class CourseService {
 	}
 
 	public CourseResponseDto updateCourse(long id, CourseUpdateDto courseUpdateDto) {
-		// TODO Auto-generated method stub
-		return null;
+		Course course = courseRepository.findById(id).orElse(null);
+		if (course == null) {
+			return null;
+		}
+		
+		String title = InputValidator.isValidInputString(courseUpdateDto.getTitle()) ? 
+				courseUpdateDto.getTitle() 
+				:
+				course.getTitle();
+		
+		String description = InputValidator.isValidInputString(courseUpdateDto.getDescription()) ?
+				courseUpdateDto.getDescription() 
+				:
+				course.getDescription();
+		
+		int durationHours = courseUpdateDto.getDurationHours();
+		
+		String category = InputValidator.isValidInputString(courseUpdateDto.getCategory()) ?
+				courseUpdateDto.getCategory() 
+				:
+				course.getCategory();
+		
+		course.setTitle(title);
+		course.setDescription(description);
+		course.setDurationHours(durationHours);
+		course.setCategory(category);
+		
+		courseRepository.save(course);
+		return CourseMapper.INSTANCE.courseToCourseGetRequestDto(course);
 	}
-
-
+	
+	public String deleteCourse(long id) {
+		try {
+			courseRepository.deleteById(id);
+			return "Course with id " + id + " deleted.";
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			return "Error.";
+		}
+	}
 }

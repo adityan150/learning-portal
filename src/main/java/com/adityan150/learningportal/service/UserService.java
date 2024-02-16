@@ -6,15 +6,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.adityan150.learningportal.entity.Course;
 import com.adityan150.learningportal.entity.User;
 import com.adityan150.learningportal.mapstruct.dtos.UserDto;
 import com.adityan150.learningportal.mapstruct.mappers.UserMapper;
+import com.adityan150.learningportal.repository.CourseRepository;
 import com.adityan150.learningportal.repository.UserRepository;
+import com.adityan150.learningportal.utils.InputValidator;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class UserService {
 	
 	private UserRepository userRepository;
+	private CourseRepository courseRepository;
 	
 	public UserDto authenticateUser(String email) {
 		List<User> userList = userRepository.findByEmail(email);
@@ -32,10 +33,8 @@ public class UserService {
 		if (userList.size() != 1) {
 			return null;
 		}
-		
 		return UserMapper.INSTANCE.userToUserDto(userList.get(0));
 	}
-	
 	
 	public List<UserDto> getAllUsers() {
 		List<User> userList = userRepository.findAll();
@@ -49,7 +48,6 @@ public class UserService {
 		return userDtoList;
 	}
 	
-	
 	public UserDto findUserById(long id) {
 		Optional<User> userOptional = userRepository.findById(id);
 		if (userOptional.isEmpty())
@@ -61,7 +59,6 @@ public class UserService {
 		return userDto;
 	}
 	
-	
 	public UserDto createUser(UserDto userDto) {
 		String email = userDto.getEmail();
 		String name = userDto.getName();
@@ -69,10 +66,11 @@ public class UserService {
 		
 		try {
 			// validate fields
-			if (!isValidEmail(email) || name == null || 
-					name.length() == 0 || role == null || 
-					!(role.equals("ADMIN") || role.equals("AUTHOR") || role.equals("LEARNER")
-							)) {
+			if (! InputValidator.isValidEmail(email) || 
+				! InputValidator.isValidInputString(name)|| 
+				role == null || 
+				!(role.equals("ADMIN") || role.equals("AUTHOR") || role.equals("LEARNER"))
+			) {
 				log.error("Values to create user are not valid.");
 				throw new Exception();
 			}
@@ -90,16 +88,6 @@ public class UserService {
 			return null;
 		}
 		
-	}
-	
-	boolean isValidEmail(String email) {
-		final String EMAIL_REGEX =
-	            "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@" +
-	            "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
-
-		Pattern pattern = Pattern.compile(EMAIL_REGEX);
-		Matcher matcher = pattern.matcher(email);
-        return matcher.matches();
 	}
 	
 	public boolean deleteUser(long id) {
@@ -120,16 +108,23 @@ public class UserService {
 		
 		User user = response.get();
 		
-		String email = userDto.getEmail();
-		if (email == null || !isValidEmail(email)) {
-				email = user.getEmail();
-		}
+		String email = InputValidator.isValidEmail(userDto.getEmail())? 
+				userDto.getEmail() 
+				:
+				user.getEmail();
+	
+		String name = InputValidator.isValidInputString(userDto.getName())?
+				userDto.getName() 
+				:
+				user.getName();
 		
-		String name = userDto.getName();
-		String role = userDto.getRole();
+		String role = InputValidator.isValidInputString(userDto.getRole())?
+				userDto.getRole()
+				:
+				user.getRole();
 		
-		if (role == null || !(role.equals("ADMIN") || role.equals("AUTHOR") || role.equals("LEARNER"))) {
-			role = user.getRole();
+		if (!(role.equals("ADMIN") || role.equals("AUTHOR") || role.equals("LEARNER"))) {
+			return null;
 		}
 		
 		user.setEmail(email);
@@ -138,4 +133,64 @@ public class UserService {
 		
 		return UserMapper.INSTANCE.userToUserDto(userRepository.save(user));
 	}
+	
+	/* Learner Functions */
+	
+	public String enrollToCourse(long userId, long courseId) {
+		User user = userRepository.findById(userId).orElse(null);
+		Course course = courseRepository.findById(courseId).orElse(null);
+		
+		if (user == null || course == null) {
+			return null;
+		}
+		
+		user.getEnrolledCourses().add(course);
+		userRepository.save(user);
+		return "User " +userId+ " enrolled to course " + courseId;
+	}
+	
+	public String favoriteCourse(long userId, long courseId) {
+		User user = userRepository.findById(userId).orElse(null);
+		Course course = courseRepository.findById(courseId).orElse(null);
+
+		if (user == null || course == null) {
+			return null;
+		}
+		
+		user.getFavoriteCourses().add(course);
+		userRepository.save(user);
+		return "Course " +courseId+ " marked to favorite by user " + userId;
+	}
+	
+	public String unenrollCourse(long userId, long courseId) {
+		User user = userRepository.findById(userId).orElse(null);
+		Course course = courseRepository.findById(courseId).orElse(null);
+		
+		if (user == null || course == null) {
+			return null;
+		}
+		
+		user.getEnrolledCourses().remove(course);
+		userRepository.save(user);
+		
+		return "User " +userId+ " unenrolled from course " + courseId;
+	}
+	
+	public String removeFavorite(long userId, long courseId) {
+		User user = userRepository.findById(userId).orElse(null);
+		Course course = courseRepository.findById(courseId).orElse(null);
+		
+		if (user == null || course == null) {
+			return null;
+		}
+		
+		user.getFavoriteCourses().remove(course);
+		userRepository.save(user);
+		
+		return "User " +userId+ " removed course " + courseId + " from favorites";
+	}
+	
+	
+	
+	
 }

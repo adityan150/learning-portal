@@ -1,17 +1,14 @@
 package com.adityan150.learningportal.entity;
 
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.ManyToAny;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -25,23 +22,17 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "courses")
-public class Course extends Auditor {
+@Table(name = "enrollment")
+public class Enrollment extends Auditor {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
+	
+	@Column(name = "user_id")
+	private long userId;
+	
+	@Column(name = "course_id")
+	private long courseId;
 
-	private String title;	
-	private String description;
-	private String category;
-	
-	@Column(name = "duration_hrs")
-	private int durationHours;
-	
-	@ManyToOne(fetch = FetchType.EAGER, optional = false)
-	@JoinColumn(name = "author_id", nullable = false)
-	@OnDelete(action = OnDeleteAction.CASCADE)
-	private User author;
-	
 }

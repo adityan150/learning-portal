@@ -1,11 +1,12 @@
 package com.adityan150.learningportal.entity;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -43,24 +44,18 @@ public class User extends Auditor {
 	
 	private String role;
 	
-	@OneToMany(mappedBy = "author", fetch = FetchType.EAGER)
-	@OnDelete(action = OnDeleteAction.CASCADE)
-	private Set<Course> published;
+	@ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@JoinTable(name = "enrollment", 
+		joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id"), 
+		inverseJoinColumns = @JoinColumn(name = "course_id", referencedColumnName = "course_id")
+	)
+	private List<Course> enrolledCourses = new ArrayList<>();
 	
-	@ManyToMany
-	@JoinTable(
-			name = "enrollment", 
-			joinColumns = @JoinColumn(name = "user_id"), 
-			inverseJoinColumns = @JoinColumn(name = "course_id")
-			)
-	private Set<Course> enrolledCourses;
-	
-	@ManyToMany
-	@JoinTable(
-			name = "favorite", 
-			joinColumns = @JoinColumn(name = "user_id"), 
-			inverseJoinColumns = @JoinColumn(name = "course_id")
-			)
-	private Set<Course> favoriteCourses;
+	@ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@JoinTable(name = "favorite", 
+		joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id"), 
+		inverseJoinColumns = @JoinColumn(name = "course_id", referencedColumnName = "course_id")
+	)
+	private List<Course> favoriteCourses = new ArrayList<>();
 
 }
